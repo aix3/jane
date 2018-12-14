@@ -1,0 +1,118 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="container"></div>
+</body>
+<script language="javascript">
+    var interval = 1;
+    var stepSize = 8;
+
+    function drawLine(x, y, w, h, src, dst, table) {
+        if (x > w) {
+            window.setTimeout(drawNextLine, interval--, 0, y + stepSize, w, h, src, dst, table);
+        } else {
+            var half = stepSize / 2;
+            // console.log('x=', x, 'y=', y, 'table.length', table.length)
+            // console.log('x/stepSize=', x / stepSize, 'y/stepSize=', y / stepSize, 'TBX.length-1=', table.length - 1, 'TBY.length-1=', Math.min(table[Math.min(table.length - 1, x / stepSize)].length - 1))
+            var tbpixel = table[Math.min(table.length - 1, x / stepSize)][Math.min(table[Math.min(table.length - 1, x / stepSize)].length - 1, y / stepSize)];
+            // console.log(table[x/stepSize][y/stepSize])
+            var pixel = src.getImageData(tbpixel[0] + half, tbpixel[1] + half, stepSize, stepSize);
+            var data = pixel.data;
+            // console.log(pixel);
+            var rgba = 'rgba(' + data[0] + ',' + data[1] + ',' + data[2] + ',' + (data[3] / 255) + ')';
+            // console.log(i, j, rgba);
+            // dst.fillStyle = rgba;
+            // dst.fillRect(tbpixel[0], tbpixel[1], stepSize, stepSize);
+            dst.putImageData(pixel, tbpixel[0], tbpixel[1]);
+            dst.save();
+
+            window.setTimeout(drawLine, interval, x + stepSize, y, w, h, src, dst, table);
+        }
+    }
+
+    function drawNextLine(x, y, w, h, src, dst, table) {
+        if (y <= h) {
+            window.setTimeout(drawLine, interval--, 0, y, w, h, src, dst, table);
+        }
+    }
+
+    function draw() {
+        var img = new Image();
+        img.src = 'images/1.jpeg';
+
+        img.onload = function () {
+            var sw = document.body.scrollWidth - 20;//window.screen.width;
+            var sh = document.body.scrollHeight - 20;//window.screen.height;
+            console.log('sw=', sw, 'sh=', sh)
+
+            var nw = img.naturalWidth;
+            var nh = img.naturalHeight;
+            console.log('nw=', nw, 'nh=', nh)
+
+            var w = 0;
+            var h = 0;
+
+            var ww = sw * 1.0 / nw;
+            var nn = sh * 1.0 / nh;
+
+            console.log(ww, nn)
+            if (ww < nn) {
+                h = Math.ceil(nh / (nw / sw));
+                w = sw;
+            } else {
+                w = Math.ceil(sw / (nh / sh));
+                h = sh;
+            }
+            console.log('w=', w, 'h=', h);
+
+            // var canvas = document.getElementById('canvas');
+            var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+
+            var ctx = canvas.getContext('2d');
+
+            ctx.translate(w / (nw / w), h / (nh / h))
+            ctx.scale(1 / (nw / w), 1 / (nh / h));
+
+            ctx.drawImage(img, -w, -h);
+
+            img.style.display = 'none';
+            console.log(img.naturalWidth, img.naturalHeight)
+            console.log(img.width, img.height)
+
+            var canvas1 = document.getElementById('canvas');
+            canvas1.width = w;
+            canvas1.height = h;
+
+            var ctx1 = canvas1.getContext('2d');
+            var step = nw / w;
+
+            var table = new Array();
+            for (var i = 0; i < w; i += stepSize) {
+                var tbi = new Array();
+                for (var j = 0; j < h; j += stepSize) {
+                    tbi.push([i, j]);
+                }
+                tbi.sort(function () { return 0.5 - Math.random() })
+                table.push(tbi);
+            }
+
+            table.sort(function () { return 0.5 - Math.random() })
+
+            window.setTimeout(drawLine, interval, 0, 0, w, h, ctx, ctx1, table);
+
+            var container = document.getElementById("container");
+            container.appendChild(canvas);
+        }
+    };
+
+    window.requestAnimationFrame(draw);
+</script>
+
+</html>
