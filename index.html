@@ -2,93 +2,260 @@
 
 <head>
     <meta charset="UTF-8">
+    <style>
+        html {
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        body {
+            background-color: coral
+        }
+    </style>
 </head>
 
 <body>
+    <!-- <div id="container"> -->
+    <!-- <h1 id="tips">请翻转手机</h1> -->
     <canvas id="canvas"></canvas>
-    <div id="container"></div>
+    <!-- </div> -->
 </body>
 <script language="javascript">
-    var interval = 1;
-    var stepSize = 8;
+    var config = {
+        debug: true,
+        interval: 36,
+        stepSize: 128,
+        finalPixelSize: 32
+    }
+
+    var debug, interval, stepSize, finalPixelSize, putPixel;
+    var cvs;
+
+    function init() {
+        debug = config.debug;
+        interval = config.interval;
+        stepSize = config.stepSize;
+        finalPixelSize = config.finalPixelSize;
+        putPixel = false;
+        cvs = undefined;
+    }
+
+    function log() {
+        if (!debug) {
+            return;
+        }
+        const args = new Array(arguments.length);
+        for (let i = 0; i < args.length; ++i) {
+            args[i] = arguments[i];
+        }
+        console.log(args.join(' '));
+    }
 
     function drawLine(x, y, w, h, src, dst, table) {
         if (x > w) {
-            window.setTimeout(drawNextLine, interval--, 0, y + stepSize, w, h, src, dst, table);
+            window.setTimeout(drawNextLine, interval, 0, y + stepSize, w, h, src, dst, table);
         } else {
             var half = stepSize / 2;
-            // console.log('x=', x, 'y=', y, 'table.length', table.length)
-            // console.log('x/stepSize=', x / stepSize, 'y/stepSize=', y / stepSize, 'TBX.length-1=', table.length - 1, 'TBY.length-1=', Math.min(table[Math.min(table.length - 1, x / stepSize)].length - 1))
-            var tbpixel = table[Math.min(table.length - 1, x / stepSize)][Math.min(table[Math.min(table.length - 1, x / stepSize)].length - 1, y / stepSize)];
-            // console.log(table[x/stepSize][y/stepSize])
-            var pixel = src.getImageData(tbpixel[0] + half, tbpixel[1] + half, stepSize, stepSize);
-            var data = pixel.data;
-            // console.log(pixel);
-            var rgba = 'rgba(' + data[0] + ',' + data[1] + ',' + data[2] + ',' + (data[3] / 255) + ')';
-            // console.log(i, j, rgba);
-            // dst.fillStyle = rgba;
-            // dst.fillRect(tbpixel[0], tbpixel[1], stepSize, stepSize);
-            dst.putImageData(pixel, tbpixel[0], tbpixel[1]);
-            dst.save();
-
+            // log('x=', x, 'y=', y, 'table.length', table.length)
+            // log('x/stepSize=', x / stepSize, 'y/stepSize=', y / stepSize, 'TBX.length-1=', table.length - 1, 'TBY.length-1=', Math.min(table[Math.min(table.length - 1, x / stepSize)].length - 1))
+            var xx = Math.min(table.length - 1, x / stepSize);
+            var yy = Math.min(table[xx].length - 1, y / stepSize);
+            var trueX = table[xx][yy][0];
+            var trueY = table[xx][yy][1];
+            animationDraw(src, dst, trueX, trueY, 2);
             window.setTimeout(drawLine, interval, x + stepSize, y, w, h, src, dst, table);
+        }
+    }
+
+    function animationDraw(src, dst, x, y, size) {
+        var half = (size) / 2;
+        var shalf = stepSize / 2;
+
+        // log(pixel);
+        var pixel = src.getImageData(x + shalf - half, y + shalf - half, size, size);
+        var data = pixel.data;
+        var rgba = 'rgba(' + data[0] + ',' + data[1] + ',' + data[2] + ',' + (data[3] / 255) + ')';
+        dst.fillStyle = rgba;
+
+        if (putPixel) {
+            dst.putImageData(pixel, x + shalf - half, y + shalf - half);
+        } else {
+            dst.fillRect(x + stepSize / 2 - half, y + stepSize / 2 - half, size, size);
+        }
+
+        if ((size + 2) <= stepSize) {
+            window.requestAnimationFrame(function () {
+                animationDraw(src, dst, x, y, size + 2);
+            });
         }
     }
 
     function drawNextLine(x, y, w, h, src, dst, table) {
         if (y <= h) {
-            window.setTimeout(drawLine, interval--, 0, y, w, h, src, dst, table);
+            window.setTimeout(drawLine, interval, 0, y, w, h, src, dst, table);
+        } else {
+            window.setTimeout(function () {
+                if (stepSize > finalPixelSize) {
+                    log('y=====', y, h, stepSize)
+                    stepSize = stepSize / 2;
+                    interval = interval / 2;
+                    log(interval, 'interval')
+                    table = new Array();
+                    for (var i = 0; i < w; i += stepSize) {
+                        var tbi = new Array();
+                        for (var j = 0; j < h; j += stepSize) {
+                            tbi.push([i, j]);
+                        }
+                        tbi.sort(function () { return 0.5 - Math.random() })
+                        table.push(tbi);
+                    }
+
+                    table.sort(function () { return 0.5 - Math.random() })
+
+                    window.setTimeout(drawLine, interval, 0, 0, w, h, src, dst, table);
+                } else {
+                    cvs.addEventListener("click", function () {
+                        if (!putPixel) {
+                            putPixel = true;
+                            log('y=====', y, h, stepSize)
+                            stepSize = stepSize * 2;
+                            interval = interval / 2;
+                            log(interval, 'interval')
+                            table = new Array();
+                            for (var i = 0; i < w; i += stepSize) {
+                                var tbi = new Array();
+                                for (var j = 0; j < h; j += stepSize) {
+                                    tbi.push([i, j]);
+                                }
+                                tbi.sort(function () { return 0.5 - Math.random() })
+                                table.push(tbi);
+                            }
+
+                            table.sort(function () { return 0.5 - Math.random() })
+
+
+                            window.setTimeout(drawLine, 1000, 0, 0, w, h, src, dst, table);
+                        } else {
+                            document.body.style = "background-img:"
+                        }
+                    });
+
+                }
+            }, 30 * interval);
         }
     }
 
+    // var updateOrientation = function () {
+    //     var orientation = window.orientation;
+    //     if (window.orientation == 0) {
+    //         var c = document.getElementById("canvas");
+    //         if (c) {
+    //             c.parentElement.removeChild(c);
+    //         }
+    //         var tips = document.getElementById("tips");
+    //         tips.style = "";
+    //     } else if (window.orientation == 90) {
+    //         var tips = document.getElementById("tips");
+    //         tips.style.display = "none";
+
+    //         var c = document.getElementById("canvas");
+    //         if (!c) {
+    //             c = document.createElement("canvas")
+    //             c.id = "canvas";
+
+    //             var container = document.getElementById("container")
+    //             container.appendChild(c);
+    //         }
+    //         setTimeout(function () {
+    //             log("xxxxxxxxxxxxxxxx", document.body.clientWidth, document.body.clientHeight, "xxxxxxxxxxxxxxxxxxxxxxxxx")
+    //             init();
+    //             window.requestAnimationFrame(draw);
+    //         }, 500)
+
+    //     }
+    // };
+
+    // event triggered every 90 degrees of rotation
+    // window.addEventListener('orientationchange', updateOrientation, false);
+
     function draw() {
         var img = new Image();
-        img.src = 'images/1.jpeg';
+        img.src = 'images/3.jpeg';
 
+        var sw = document.body.clientWidth;//window.screen.width;
+        var sh = document.body.clientHeight;//window.screen.height;
         img.onload = function () {
-            var sw = document.body.scrollWidth - 20;//window.screen.width;
-            var sh = document.body.scrollHeight - 20;//window.screen.height;
-            console.log('sw=', sw, 'sh=', sh)
+            log('swwwwwww=', sw, sh)
+            log('sw=', sw, 'sh=', sh)
 
             var nw = img.naturalWidth;
             var nh = img.naturalHeight;
-            console.log('nw=', nw, 'nh=', nh)
+            log('nw=', nw, 'nh=', nh)
 
             var w = 0;
             var h = 0;
 
-            var ww = sw * 1.0 / nw;
-            var nn = sh * 1.0 / nh;
+            // var ww = sw * 1.0 / nw;
+            // var nn = sh * 1.0 / nh;
 
-            console.log(ww, nn)
-            if (ww < nn) {
-                h = Math.ceil(nh / (nw / sw));
-                w = sw;
-            } else {
-                w = Math.ceil(sw / (nh / sh));
-                h = sh;
-            }
-            console.log('w=', w, 'h=', h);
+            // log(ww, nn)
+            // if (ww < nn) {
+            //     h = Math.ceil(nh / (nw / sw));
+            //     w = sw;
+            // } else {
+            //     w = Math.ceil(nw / (nh / sh));
+            //     h = sh;
+            // }
 
-            // var canvas = document.getElementById('canvas');
+            // w = w - (w % 2);
+            // h = h - (h % 2);
+            // log('w=', w, 'h=', h);
+
+            // 宽度就是浏览器的宽度
+            w = sw;
+            h = sh;
+
+            w = w - (w % 2);
+            h = h - (h % 2);
+
             var canvas = document.createElement('canvas');
             canvas.width = w;
             canvas.height = h;
 
             var ctx = canvas.getContext('2d');
 
-            ctx.translate(w / (nw / w), h / (nh / h))
-            ctx.scale(1 / (nw / w), 1 / (nh / h));
+            // ctx.translate(w / (nw / w), h / (nh / h));
+            // ctx.scale(1 / (nw / w), 1 / (nh / h));
 
-            ctx.drawImage(img, -w, -h);
+            var scaleS = sw / sh;
+            var scaleN = nw / nh;
+
+            var ww, hh, sx, sy;
+            if (scaleS > scaleN) {
+                hh = Math.ceil(nw / scaleS);
+                ww = nw;
+                sx = 0;
+                sy = (nh - hh) / 2;
+            } else {
+                ww = Math.ceil(nh * scaleS);
+                hh = nh;
+                sx = (nw - ww) / 2;
+                sy = 0;
+            }
+            log(scaleS, 'scale')
+            log(ww, hh, 'ww, hh')
+
+            // ctx.drawImage(img, 0, 0, nw, nh, (nw-sw)/2, (nh-sh)/2, w, h);
+            ctx.drawImage(img, sx, sy, ww, hh, 0, 0, w, h);
 
             img.style.display = 'none';
-            console.log(img.naturalWidth, img.naturalHeight)
-            console.log(img.width, img.height)
+            log(img.naturalWidth, img.naturalHeight)
+            log(img.width, img.height)
 
             var canvas1 = document.getElementById('canvas');
             canvas1.width = w;
             canvas1.height = h;
+            cvs = canvas1;
 
             var ctx1 = canvas1.getContext('2d');
             var step = nw / w;
@@ -107,12 +274,34 @@
 
             window.setTimeout(drawLine, interval, 0, 0, w, h, ctx, ctx1, table);
 
-            var container = document.getElementById("container");
-            container.appendChild(canvas);
+            // var container = document.getElementById("container");
+            // container.style.width = w + "px";
+            // log(container.style.width)
         }
     };
 
+    // if (window.orientation == 0) {
+    //     var c = document.getElementById("canvas");
+    //     if (c) {
+    //         c.parentElement.removeChild(c);
+    //     }
+    //     var tips = document.getElementById("tips");
+    //     tips.style.display = "display";
+    // } else if (window.orientation == 90) {
+    //     var tips = document.getElementById("tips");
+    //     tips.style.display = "none";
+
+    //     var c = document.getElementById("canvas");
+    //     if (!c) {
+    //         c = document.createElement("canvas")
+    //         c.id = "canvas";
+
+    //         var container = document.getElementById("container")
+    //         container.appendChild(c);
+    //     }
+    init();
     window.requestAnimationFrame(draw);
+    // }
 </script>
 
 </html>
