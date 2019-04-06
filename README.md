@@ -1,5 +1,5 @@
 # jane
-Draw a image in full page with with canvas. 
+Draw a image in full page with canvas. 
 
 #### Original
 <img src="images/1.jpeg" width="792px" height="445px">
