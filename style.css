@@ -1,0 +1,14 @@
+html {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+body {
+    background-color: coral
+}
+
+canvas {
+    top: 0px;
+    left: 0px;
+    position: absolute;
+}
