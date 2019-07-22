@@ -8,10 +8,6 @@ var config = {
     img: 'images/1.jpeg'
 }
 
-var Drawer = {
-    context: {}
-}
-
 function log() {
     if (!debug) {
         return;
@@ -81,18 +77,6 @@ function drawNextBox(x, y, w, h, src, dst, table, context) {
         table = shuffleTable(context.stepSize, w, h);
 
         window.setTimeout(drawLine, context.interval, 0, 0, w, h, src, dst, table, context);
-    } else {
-        // context.cvs.addEventListener("click", function () {
-        //     if (!context.putPixel) {
-        //         context.putPixel = true;
-        //         // log('y=====', y, h, context.stepSize)
-        //         context.stepSize = context.stepSize * 2;
-        //         // context.interval = context.interval / 2;
-        //         // log(context.interval, 'interval')
-        //         table = shuffleTable(context.stepSize, w, h);
-        //         window.setTimeout(drawLine, 1000, 0, 0, w, h, src, dst, table, context);
-        //     }
-        // });
     }
 }
 
@@ -109,15 +93,8 @@ function draw() {
         var nh = img.naturalHeight;
         log('nw=', nw, 'nh=', nh)
 
-        var w = 0;
-        var h = 0;
-
-        // 宽度就是浏览器的宽度
-        w = sw;
-        h = sh;
-
-        w = w - (w % 2);
-        h = h - (h % 2);
+        var w = sw - (sw % 2);
+        var h = sh - (sh % 2);
 
         var srcCvs = document.createElement('canvas');
         srcCvs.width = w;
@@ -155,8 +132,6 @@ function draw() {
         config.cvs = boxCvs;
 
         var dst = boxCvs.getContext('2d');
-        // var step = nw / w;
-
         var table = shuffleTable(config.stepSize, w, h);
         window.setTimeout(drawLine, config.interval, 0, 0, w, h, src, dst, table, config);
     }

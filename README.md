@@ -1,11 +1,11 @@
 # jane
 Draw a image in full page with canvas. 
 
-#### Original
+### Before
 <img src="images/1.jpeg" width="792px" height="445px">
 
-#### Result
+### After
 <img src="images/result.gif" width="792px" height="445px">
 
-#### License
+### License
 MIT
